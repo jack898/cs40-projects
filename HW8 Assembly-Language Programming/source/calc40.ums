@@ -1,0 +1,354 @@
+// calc40.ums
+// Authors: jburto05 & ejang02
+//
+// Purpose: Contains calculator-related data structures
+// and functions
+// Global Registers: r2 is the pointer for the top value for the call stack
+// r5 is the pointer for the top value for the value stack, r0 is zero
+
+// Maintains r0 == 0 invariant
+// Sets r6 and r7 to be used as temps across calc loop
+        .section init
+        .temps r6, r7  
+        .zero r0
+
+
+// Initializes space for the value stack with the .space directive, and
+// sets a label endValueStack to point off the end of the value stack
+        .section data
+        .space 1000000
+endValueStack:
+
+
+        .section text
+
+// MAIN DRIVER
+// puts calc into waiting state and then halts
+main: 
+        r5 := endValueStack
+        goto waiting
+        halt
+
+// WAITING STATE  
+// r1 used to hold input, set jumptable offset, and check for EOF
+// r3 used to hold jumptable offset address, and eventually used
+// as temp for EOF goto macro.
+waiting: 
+        r1 := input()
+        if (r1 == -1) goto endProgram using r3 // EOF condition
+        
+        r3 := jumptable + r1
+        r3 := m[r0][r3]
+        goto r3
+
+
+        halt
+
+// ENTERING STATE
+// r1 used to hold input and set jumptable offset
+// r3 used to hold jumptable offset address OR a digit 0-9
+// r4 used as a temp for the goto macro, and used 
+// to hold each digit of multi-digit numeral
+entering: 
+        r1 := input()
+        r3 := jumptable + r1
+        r3 := m[r0][r3]
+        if (r3 != digit) goto r3 using r4
+
+        // else case: the input is a digit
+        r1 := r1 - 48
+        pop r4 off stack r5
+        r4 := r4 * 10
+        r4 := r4 + r1
+        push r4 on stack r5
+
+        goto entering
+        
+// MULTIPLY
+// r3 and r4 used to hold values from value stack
+// r3 used to hold product of r3 and r4
+mult:   
+        // BINARY OPERAND CHECK
+        // r4 used to hold endValueStack pointer
+        // r3 used to hold number of values on value stack
+        // r1 used as a temp for goto macro
+        r4 := endValueStack
+        r3 := r4 - r5
+        if (r3 <s 2) goto binaryErr using r1
+
+
+        pop r3 off stack r5
+        pop r4 off stack r5
+
+        r3 := r3 * r4
+        push r3 on stack r5
+        goto waiting
+
+// ADD
+// r3 and r4 used to hold values from value stack
+// r3 used to hold sum of r3 and r4
+add:
+        // BINARY OPERAND CHECK
+        // r4 used to hold endValueStack pointer
+        // r3 used to hold number of values on value stack
+        // r1 used as a temp for goto macro
+        r4 := endValueStack
+        r3 := r4 - r5
+        if (r3 <s 2) goto binaryErr using r1
+
+        pop r3 off stack r5
+        pop r4 off stack r5
+
+        r3 := r3 + r4
+        push r3 on stack r5
+        goto waiting
+
+// SUBTRACT
+// r3 and r4 used to hold values from value stack
+// r3 used to hold difference of r3 and r4
+sub:
+        // BINARY OPERAND CHECK
+        // r4 used to hold endValueStack pointer
+        // r3 used to hold number of values on value stack
+        // r1 used as a temp for goto macro
+        r4 := endValueStack
+        r3 := r4 - r5
+        if (r3 <s 2) goto binaryErr using r1
+
+        pop r3 off stack r5
+        pop r4 off stack r5
+
+        r3 := r4 - r3
+        push r3 on stack r5
+        goto waiting
+
+// DIVIDE
+// r3 and r4 used to hold values from value stack
+// r3 used to hold quotient of r3 and r4 
+div:
+        // BINARY OPERAND CHECK
+        // r4 used to hold endValueStack pointer
+        // r3 used to hold number of values on value stack
+        // r1 used as a temp for goto macro
+        r4 := endValueStack
+        r3 := r4 - r5
+        if (r3 <s 2) goto binaryErr using r1
+
+
+        pop r3 off stack r5
+        pop r4 off stack r5
+
+        
+
+        
+        if (r3 == r0) goto divZeroErr using r1
+        if (r3 <s r0) goto negDivisor using r1
+        if (r4 <s r0) goto negDividend using r1
+
+        goto divBothPositive
+
+        
+        divBothPositive:
+                r3 := r4 / r3
+                push r3 on stack r5
+                goto waiting
+                
+
+        divNotPositive:
+                r3 := r4 / r3
+                r3 := r3 * -1
+                push r3 on stack r5
+                goto waiting
+
+        negDivisor:
+                r3 := r3 * -1
+                if (r4 <s r0) goto bothNegative using r1
+                goto divNotPositive
+
+        negDividend:
+                r4 := r4 * -1
+                goto divNotPositive
+                
+        bothNegative:
+                r4 := r4 * -1
+                goto divBothPositive using r1
+
+
+        divZeroErr:
+                push r4 on stack r5
+                push r3 on stack r5
+                output "Division by zero\n"
+                goto waiting
+
+// BITWISE OR
+// r3 and r4 used to hold values from value stack
+// r3 used to hold r3 OR r4 
+or:
+        // BINARY OPERAND CHECK
+        // r4 used to hold endValueStack pointer
+        // r3 used to hold number of values on value stack
+        // r1 used as a temp for goto macro
+        r4 := endValueStack
+        r3 := r4 - r5
+        if (r3 <s 2) goto binaryErr using r1
+
+        pop r3 off stack r5
+        pop r4 off stack r5
+
+        r3 := r3 | r4
+        push r3 on stack r5
+        goto waiting
+
+// BITWISE AND
+// r3 and r4 used to hold values from value stack
+// r3 used to hold r3 AND r4 
+and:
+        // BINARY OPERAND CHECK
+        // r4 used to hold endValueStack pointer
+        // r3 used to hold number of values on value stack
+        // r1 used as a temp for goto macro
+        r4 := endValueStack
+        r3 := r4 - r5
+        if (r3 <s 2) goto binaryErr using r1
+
+        pop r3 off stack r5
+        pop r4 off stack r5
+
+        r3 := r3 & r4
+        push r3 on stack r5
+        goto waiting
+
+// CHANGE SIGN
+// r3 used to hold value from value stack, and negation of
+// that value
+chgSign:
+        // UNARY OPERAND CHECK
+        // r4 used to hold endValueStack pointer
+        // r1 used as a temp for goto macro
+        r4 := endValueStack
+        if (r4 == r5) goto unaryErr using r1
+
+        pop r3 off stack r5
+        r3 := -r3
+        push r3 on stack r5
+        goto waiting
+
+// BITWISE COMPLEMENT
+// r3 used to hold value from value stack, and bitwise complement of
+// that value
+neg:
+        // UNARY OPERAND CHECK
+        // r4 used to hold endValueStack pointer
+        // r1 used as a temp for goto macro
+        r4 := endValueStack
+        if (r4 == r5) goto unaryErr using r1
+        
+        pop r3 off stack r5
+        r3 := ~r3
+        push r3 on stack r5
+        goto waiting
+
+// SWAP
+// r3 and r4 used to hold values from value stack
+swap:
+        // BINARY OPERAND CHECK
+        // r4 used to hold endValueStack pointer
+        // r3 used to hold number of values on value stack
+        // r1 used as a temp for goto macro
+        r4 := endValueStack
+        r3 := r4 - r5
+        if (r3 <s 2) goto binaryErr using r1
+
+        pop r3 off stack r5
+        pop r4 off stack r5
+
+        push r3 on stack r5
+        push r4 on stack r5
+
+        goto waiting
+
+// DUPLICATE
+// r3 used to hold value from value stack
+dup:
+        // UNARY OPERAND CHECK
+        // r4 used to hold endValueStack pointer
+        // r1 used as a temp for goto macro
+        r4 := endValueStack
+        if (r4 == r5) goto unaryErr using r1
+        
+        pop r3 off stack r5
+        push r3 on stack r5
+        push r3 on stack r5
+        goto waiting
+
+// POP VALUE
+// r3 used to hold value from value stack
+popVal:
+        // UNARY OPERAND CHECK
+        // r4 used to hold endValueStack pointer
+        // r1 used as a temp for goto macro
+        r4 := endValueStack
+        if (r4 == r5) goto unaryErr using r1
+        
+        pop r3 off stack r5
+        goto waiting
+
+// ZERO STACK
+// r4 used to hold endValueStack pointer, for determining value stack size
+// r3 used to hold values from value stack
+disc:
+        r4 := endValueStack
+        if (r4 == r5) goto waiting using r1 // once stack is empty
+        pop r3 off stack r5
+        goto disc
+
+binaryErr:
+        output "Stack underflow---expected at least 2 elements\n"
+        goto waiting
+
+unaryErr:
+        output "Stack underflow---expected at least 1 element\n"
+        goto waiting
+        
+
+// r1 stores the ASCII representation from input; the numeric value is stored
+// on the value stack. Goes to the entering phase. 
+digit: 
+        r1 := r1 - 48
+        push r1 on stack r5
+
+        goto entering
+
+// PRINTD
+// Prints signed decimal representation of number
+// r3 initialized to the endValueStack pointer, gets pushed on the caller stack
+// goes to printStk
+print:
+        r3 := r5
+        push r3 on stack r2
+        goto printStk
+
+
+        // r3 is an arguement that contains a pointer to a value on the value 
+        // stack, calls printNum to print that number
+        //r4 contains the endValueStack pointer, once r3 reaches the 
+        // end of the value stack waiting is called
+        printStk:
+                pop r3 off stack r2
+                r4 := endValueStack     
+                
+                if (r3 == r4) goto waiting using r1
+                r4 := m[r0][r3]
+                r3 := r3 + 1
+
+
+                push r3 on stack r2
+                push r4 on stack r2
+                output ">>> "
+                goto printNum
+
+        printStkFinis:
+                output "\n"
+                goto printStk linking r1
+
+

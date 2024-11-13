@@ -1,0 +1,102 @@
+// urt0.ums
+// Authors: jburto05 & ejang02
+//
+// Purpose: Initializes the jump table and call stack with a pointer
+// just past it, and defines error function.
+
+
+
+// Maintains r0 == 0 invariant
+// Sets r6 and r7 to be used as temps across calc loop
+      .zero r0
+      .temps r6,r7
+
+      .section init
+
+// r2 is set to hold the call stack pointer label for duration of 
+// the program runtime.
+// r0 is set to equal 0, per calling convention
+// r3 is initialized to 0 so it can be used as an iterator
+_ustart:
+      r0 := 0
+      r2 := endstack 
+
+
+      r3 := 0
+      
+// Initializes every value in the jumptable to the label input_error
+// With r3 used as an iterator, r5 used to index the memeory
+initError: 
+      if (r3 == 256) goto initCommands using r4 // r4 used to assist macro
+      r5 := jumptable + r3
+      m[r0][r5] := input_error
+      r3 := r3 + 1
+      goto initError
+
+// Throws appropriate error message when invalid char is given as 
+// input--which is stored in r1--and returns to waiting state
+input_error:
+      output "Unknown character '"
+      output r1
+      output "'\n"
+      goto waiting   
+
+
+// Jumps to appropriate operation label depending on user input
+// character, utilizing segment zero (since r0 is always 0), and
+// an offset from the pointer "jumptable"
+initCommands: 
+      m[r0][jumptable + ' '] := waiting
+
+      // Considering newline could be CR or LF character
+      m[r0][jumptable +  10] := print
+      m[r0][jumptable +  13] := print
+
+      m[r0][jumptable + '*'] := mult
+      m[r0][jumptable + '+'] := add
+      m[r0][jumptable + '-'] := sub
+      m[r0][jumptable + '/'] := div
+      m[r0][jumptable + '|'] := or
+      m[r0][jumptable + '&'] := and
+      m[r0][jumptable + 'c'] := chgSign
+      m[r0][jumptable + '~'] := neg
+      m[r0][jumptable + 's'] := swap
+      m[r0][jumptable + 'd'] := dup
+      m[r0][jumptable + 'p'] := popVal
+      m[r0][jumptable + 'z'] := disc
+      m[r0][jumptable + '0'] := digit
+      m[r0][jumptable + '1'] := digit
+      m[r0][jumptable + '2'] := digit
+      m[r0][jumptable + '3'] := digit
+      m[r0][jumptable + '4'] := digit
+      m[r0][jumptable + '5'] := digit
+      m[r0][jumptable + '6'] := digit
+      m[r0][jumptable + '7'] := digit
+      m[r0][jumptable + '8'] := digit
+      m[r0][jumptable + '9'] := digit
+
+      goto callmain linking r1 // Utilizing for the goto macro
+
+
+
+      .section text
+
+
+
+// Allocate space for call stack
+// Set endstack label to address of first word *after* the call stack
+      .section data
+      .space 1000000
+endstack:
+
+
+
+
+// Allocate space for jump table
+// Set jumptable label to point to the top of the jump table
+      .section rodata
+jumptable:
+      .space 256
+
+
+

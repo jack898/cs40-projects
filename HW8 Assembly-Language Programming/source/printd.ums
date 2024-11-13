@@ -1,0 +1,73 @@
+// printd.ums
+// Authors: jburto05 & ejang02
+//
+// Purpose: Prints UM words in decimal format
+// Global registers: r0 is zero as an invariant, r6 and r7 are used as temps 
+
+        .section init
+        .zero r0
+        .temps r6, r7
+
+        .section text
+
+// Arguemnets: r4 which contains a number, r3 is set to -1 and pushed on to the
+// call stack, jumps to helper functions if number is zero or negagtive 
+// otherwise pushes r4 on to the stack and gos to parseDigits
+printNum:
+        pop r4 off stack r2
+        r3 := -1
+        push r3 on stack r2
+        if (r4 == r0) goto printZero using r1
+        if (r4 <s r0) goto printNegative using r1
+        push r4 on stack r2  
+
+// Arguements: r4 which conatins a number, 
+// r3 is used to contain the one's digit, and pushed on the call stack
+// and r4 gets its ones digit chopped off and is returned to the call stack
+// parseDigits calls itself until all digits are pushed onto the call stack
+parseDigits:
+        pop r4 off stack r2
+        if (r4 == r0) goto printDigits using r1
+        r3 := r4 mod 10
+        push r3 on stack r2
+        r4 := r4 / 10
+        push r4 on stack r2
+        goto parseDigits
+
+// Gets digits from the call stack and prints them until a -1 flag is hit
+// goes to printStkFinis once that flag is hit
+printDigits:
+        pop r4 off stack r2
+        if (r4 == -1) goto printStkFinis using r1
+        r4 := r4 + 48
+        output r4
+        goto printDigits
+
+// pops the -1 flag off the call stack, prints 0 and goes to printStkFinis
+printZero:
+        pop r3 off stack r2
+        output "0"
+        goto printStkFinis
+
+// prints the negative sign, negates r4 which contains the number returns that\
+// numbers and calls parseDigits, in the special that r4 is greater than 0
+// printSmallestNum is called using r1
+printNegative:
+        output "-"
+        if (r4 >s 0) goto printSmallestNum using r1
+        r4 := -r4 
+        push r4 on stack r2
+        goto parseDigits 
+
+// pops off the -1 flag and prints the smallest number with, 
+// goes to printStkFinis
+printSmallestNum:
+        pop r3 off stack r2
+        output "2147483648"
+        goto printStkFinis
+
+
+
+        .section data
+
+        .section rodata

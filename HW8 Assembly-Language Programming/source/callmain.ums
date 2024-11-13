@@ -1,0 +1,19 @@
+// callmain.ums
+// Authors: jburto05 & ejang02
+//
+// Purpose: Makes initial call to main and halts
+// Global Registers: r0 as zero invariant is maintained, r6 and r7 are used 
+// as temps
+
+        .section init
+        .zero r0
+        .temps r6, r7
+        
+        .section text
+// calls main within calc40.ums
+callmain:
+        goto main linking r1 
+
+// halts the program
+endProgram:
+        halt

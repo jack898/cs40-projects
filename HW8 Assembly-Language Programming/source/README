@@ -1,0 +1,89 @@
+---------------------------------------------------
+HW8 RPN README
+4/30/2024
+Authors: Jack Burton jburto05, Maurice Jang ejang02
+---------------------------------------------------
+
+
+Acknowledgements
+----------------------
+We received help from various TAs--thank you to the TAs for taking optional
+hours during reading period!
+
+Implementation Correctness
+----------------------
+To our knowledge, our calculator should produce the same output on any of
+the RPN instructions (or invalid instructions) as the reference calc40
+implementation.
+
+
+Departures from Calling Convention
+----------------------
+We chose to use r5 as a "global" register (global to calc40.ums) which stores
+a pointer to the end of the value stack (r2 remained pointer to the 
+call stack). We did this because we needed a pointer to the value stack 
+at some point, and we did not need to utilize r5 as a temp anywhere else.
+
+Instead of holding the return address in r1, we just go to the labels using 
+r1 as a temp at the end of each function.
+
+
+Print Module Implementation
+----------------------
+The print module uses two recursive loops, one that iterates through each value
+on the value stack, one that iterates through each digits of each value using
+mod 10 and / 10 and using additional functions to handle zero, negative 
+numbers and -2147483648.
+
+
+ 
+Value Stack Implementation
+----------------------
+Our value stack is modeled after the call stack, with .space allocating 
+1,000,000 empty words and then making a pointer to the end of the value stack
+and storing that pointer in r5 (all in the calc40 module).
+
+
+Section Summaries
+----------------------
+
+urt0.ums:
+        section init: Initializes a pointer to the call stack, and
+        initializes the jump table with all values initially set to
+        input_error and then jumps to the callmain module.
+        
+        section data: Allocates space for the call stack and makes an
+        identifier to point to this space
+        
+        section rodata: Allocates space for the jumptable.
+
+calc40.ums
+        section init: Maintains invariant of r0 == 0, and sets r6 and r7
+        aside to be used as temps.
+                
+        section text: Holds main driver and each operation, and moves
+        program between waiting & entering state and each operation.
+        
+        section data: Allocates 1,000,000 words for value stack and makes
+        value stack pointer label point just off the end of the value stack.
+
+printd.ums:
+        section init: Maintains invariant of r0 == 0, and sets r6 and r7
+        aside to be used as temps.
+                
+        section text: Series of functions to print a value on the value stack
+        
+callmain.ums: 
+        section init: Maintains invariant of r0 == 0, and sets r6 and r7
+        aside to be used as temps.
+                
+        section text: Goes to the main driver and then halts.
+
+
+
+Hours Spent
+---------------------
+Analyzing: 5 hrs
+Writing: 1 hr
+Debugging: 20 hrs
+
