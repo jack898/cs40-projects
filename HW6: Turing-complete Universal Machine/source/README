@@ -1,0 +1,125 @@
+HW6 UM README
+Jack Burton jburto05
+James Hartley jhartl01
+
+
+Acknowledgments
+---------------
+We received help from various TAs during office hours.
+
+
+
+Implementation
+--------------
+We have correctly implemented a universal machine with a 14 instruction
+architecture that has defined behavior for all cases except the failure
+cases outlined in the spec.
+
+Our program runs slightly slower than expected, completing midmark in ~130sec
+
+
+
+Significant Departures from Design
+----------------------------------
+Our design was missing a program counter, so we created 
+a struct in our memory module that stores an address and offset
+to serve as the program counter. An instance of this 
+program counter struct is then put into our memory struct.
+
+
+Architecture Summary
+-------------------
+UM: Main driver module, passes opened UM file to memload and initializes
+memory object
+
+Memory: Emulates segmented memory and registers using sequence of sequences
+and a UArray, respectively. Emulates a program counter with an address 
+and offset. Creates getters and setters for the memory and program counter.
+- Secrets: Memory struct, program counter struct
+
+Memload: Creates big-endian bitpacked words, puts them in memory object from
+UM
+- Secrets: Raw words from input file
+
+Memexec: Reads from UM memory object, decodes words, and uses memory getters
+and setters as necessary to execute appropriate commands.
+- Secrets: Decoded words from memory
+
+
+50 Million Instruction Runtime
+------------------------------
+Our UM would take about 13 minutes, 33 seconds to execute 
+50 million instructions, based on the fact that midmark took 2min, 10 seconds 
+to execute 8 million instructions.
+
+
+UM Unit Tests
+------------
+halt.um: Tests the HALT instruction by calling it.
+
+halt-verbose.um: Tests the HALT instruction by calling it and having 
+instructions to print "BAD!" to output if the halt fails.
+
+add.um: Tests the ADD instruction by adding 51 and 2 and printing the result,
+which should be ASCII 53 or "5"
+
+divide.um: Tests the DIV instruction by dividing 88 by 2 and printing the
+result, which should be ASCII 44 or ","
+
+mult.um: Tests the MUL instruction by multiplying 44 and 2 and printing
+the result, which should be ASCII 88 or "X"
+
+mult-overflow.um: Tests the MUL specifications by multiplying 130 and 2
+and trying to print the result--this should produce a value > 255 which 
+should cause an error
+
+math-ops.um: Tests the MUL, ADD, and DIV instructions by performing a series
+of multiplication, addition, and division and printing the intermediate
+values--this should print 2dhh.
+
+loadv.um: Tests the LOADV instruction by loading "B" into a register and 
+then outputting that register. Should print "B".
+
+input.um: Tests the INPUT instruction by inputting 53 into a register and
+outputting the register. This should print ASCII 53 or "5".
+
+input-add.um: Tests the INPUT and ADD instructions by inputting "0" into
+a register, adding 5 to it, and outputting the sum. This should print 
+ASCII 53 or "5".
+
+cmov.um: Tests the CMOV instruction by moving "A" into an empty register,
+and printing that register after the conditional move with a nonzero value
+from another register. This should print "A". It then conditionally moves
+"A" to another register which has "C", conditioned on 0. 
+This should print C (ie shouldn't move)
+
+nand.um: Tests the NAND instruction by creating conditions where NAND should
+return 0 and a nonzero value, and performs conditional moves in each of 
+these cases (one cmov should happen, the other shouldn't). This should
+print A.
+
+segmap.um: Tests the segment map instruction by mapping a segment with 10
+words, and then conditionally moving, based on the address of this
+new segment, the value "A" into a register which is then outputted. If the
+address is correct (ie nonzero), this should print A.
+
+segunmap.um: Tests the segment unmap instruction by mapping and then
+unmapping a segment. Should do nothing and produce no errors.
+
+segloadstore.um: Tests segment load and segment store by mapping a new
+segment, storing a value "A" into a word in this new segment, and then
+loading that value and outputting it. This should print "A".
+
+load-program.um: Tests load program by loading a new offset in the 0th segment
+and going to that offset which outputs a value. If "B" is outputted the jump
+occured successfully, otherwise it failed.
+
+(In addition we used midmark, cat, and hello from the provided tests)
+
+Hours spent
+-----------
+Analysis: 4
+Preparing Design: 8
+Solving problems: 20
+
+
