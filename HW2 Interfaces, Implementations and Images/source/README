@@ -1,0 +1,14 @@
+Jack Burton jburto05
+Maurice Jang ejang02
+
+Acknowledgments: various TAs in Office Hours
+
+Implentation Status: 
+- UArray2 and Bit2 implementations work as specified 
+(and worked functionally when solving Sudoku/unblackedges)
+-  Sudoku can check for valid pgm formatting (CRE or not) and valid puzzles
+(EXIT_SUCCESS or EXIT_FAILURE)
+-  unblackedges can check for valid pbm formatting (CRE or not), and if valid
+will return plain PBM with black edges removed iteratively per the spec
+
+Time Spent: about 25 hours
