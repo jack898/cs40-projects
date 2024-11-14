@@ -1,6 +1,6 @@
 ## CS40 Projects
 A few of my projects from [CS 40 - Machine Structure and Assembly Language Programming](https://www.cs.tufts.edu/comp/40/) in Spring 2024 at Tufts University.
-Each HW folder contains the official specifciation (spec.pdf), and a source folder with the source code, a Makefile, and a design doc when applicable (design.pdf).
+Each HW folder contains the official specification (spec.pdf), a design doc when applicable (design.pdf), and a source folder with the source code, a Makefile
 
 ### Summaries
 #### HW2 Interfaces, Implementations and Images
