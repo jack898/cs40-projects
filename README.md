@@ -10,6 +10,9 @@ This project contained 4 sub-projects:
 3. A tool to find solved sudoku puzzles in a pgm image, utilizing our UArray2 abstraction
 4. A tool to remove black edges from pbm images, utilizing our Bit2 abstraction
 
+#### HW3 Locality
+Implements blocked 2D arrays and utilizes them to perform polymorphic image rotation, with timing calculations/explanations for various rotations.
+
 #### HW4 Machine Arithmetic
 Performs lossy compression and decompression of ppm images using quantization of chroma.
 
