@@ -1,0 +1,149 @@
+HW3 Locality README
+Authors: Alekha Rao arao12, Jack Burton jburto05
+
+ACKNOWLEDGEMENTS
+----------------
+- TA's at Office Hours
+- Using spec-provided code for a2plain mapping functions and ppmtrans argument
+handling.
+
+IMPLEMENTATIONS
+---------------
+- Completed an implementation of a blocked 2-dimensional polymorphic array
+
+- Completed an implementation of A2Methods that uses UArray2, so that the 
+A2Methods interface can now use either a UArray2 or UArray2b depending on 
+the client's implementation
+
+- Built ppmtrans, a program that performs a user-specified rotation of 
+either 0, 90, 180, or 270 degrees on a given PPM using user-specified array 
+mapping and optionally times how long the rotation takes. Flip horizontal,
+flip vertical, and tranpose were not implemented but should be handled with 
+the usage error message.
+
+SOLUTION ARCHITECTURE
+---------------------
+UArray2b:
+We represented blocked polymorphic 2D arrays (UArray2b) as an outer UArray2
+where each element--which is a block--is a UArray. For simplifying our
+UArray2b manipulation functions, we made a struct which stores the
+overall UArray2b width, height, and size of each element, as well as the
+outer UArray2's width, height, the blocksize (length of 1 side of the block),
+and the UArray2 outer array.
+- Our mapping loops through the blocks of the outerArray in row-major order,
+going through each element in each block in row-major order also. It checks
+each element before running the apply function to ensure that that spot in
+the array actually contains a value.
+
+a2plain:
+a2plain simply calls all of the appropriately corresponding A2Methods functions
+from the UArray2 interface (or they are just set to NULL if they do not exist
+for UArray2, such as block-major mapping).
+
+ppmtrans:
+Our ppmtrans program first checks and validates user arguments to ensure 
+they meet the spec, or throws a usage error if not. From there, the 
+client-specified ppm is opened/an error is thrown if that fails. Next, we call 
+a rotateImage() function with the user-specified rotation degrees and pass it 
+the file pointer. This function creates an array of equal size to the original
+ ppm raster to store the rotated image, then passes both this rotation array 
+ and the ppm raster to another rotation helper function. (It also starts a 
+ timer here if the user specified to time the operations). That helper calls 
+ the appropriate mapping function with the corresponding apply function for 
+ the rotation degrees specified (either 90, 180, or 270). These apply functions
+ take each pixel from the original ppmRaster, apply the spec's math to find
+ their new indices in the rotated ppm image, and put the pixel into those
+ new rotation indices.  Back in the main rotateImage() function, the timer 
+ is stopped/time file updated (if specified earlier), Pnm_ppmwrite writes 
+ the rotated ppm to stdout, and all of the memory is freed.
+
+
+PART E
+------
+The sizes of the images used for each of your tests
+- width: 8160, height: 6120
+- number of pixels: 49,939,200
+
+total CPU time(nanoseconds):
+-------------------------------------------------------------------------------
+Rotation degrees: |     0       |       90       |       180      |      270
+------------------|-------------|----------------|----------------|------------
+                  |             |                |                |
+block-major       |    1092     |   3606275653   |  3476015282    | 3306409167
+                  |             |                |                |
+------------------|-------------|----------------|----------------|------------
+                  |             |                |                |        
+col- major        |    1677     |   6057949365   |  2677658524    | 5838381968 
+                  |             |                |                |
+------------------|-------------|----------------|----------------|------------
+                  |             |                |                |
+row- major        |    1277     |   5450910495   |  8510885164    | 5432104526 
+                  |             |                |                |
+------------------|-------------|----------------|----------------|------------
+
+
+time per input pixel (nanoseconds):
+-------------------------------------------------------------------------------
+Rotation degrees: |     0       |       90       |       180      |      270
+------------------|-------------|----------------|----------------|------------
+                  |             |                |                |
+block-major       |  0.000021   |     72.21      |      69.60     |    66.21
+                  |             |                |                |
+------------------|-------------|----------------|----------------|------------
+                  |             |                |                |        
+col- major        |  0.000034   |     121.31     |      53.62     |    116.91  
+                  |             |                |                |
+------------------|-------------|----------------|----------------|------------
+                  |             |                |                |
+row- major        |  0.000026   |     109.15     |     170.43     |    108.77  
+                  |             |                |                |
+------------------|-------------|----------------|----------------|------------
+
+The estimated number of instructions executed per input pixel rotated is equal
+to the time per input pixel for each rotation in nanoseconds. (Assuming
+computers process approx. 1,000,000,000 instructions/sec)
+
+Computer Information:PU type and clock rate. (more /proc/cpuinfo)
+- model name: Intel(R) Xeon(R) Silver 4214Y CPU @ 2.20GHz
+- model: 85
+- cpu family: 6
+- cpu MHz: 2194.844
+
+OBSERVED PATTERNS
+-----------------
+- 90 and 270 degrees have very similar times/times per input pixel
+        * This is expected because they use very 
+        similar math for rotating, since 270 degrees clockwise 
+        is just 90 degrees counterclockwise. That means that they will be 
+        accessing the pixels in the resultant pixel array in a similar
+        pattern (just the opposite quadrants), thus their usage of 
+        the cache for both reading and writing from the original raster
+        to the new raster will be similar.
+
+- Block-major mapping was by far the fastest for 90 and 270 degree rotations
+        * This is expected because we used a large image where the rows 
+        and columns of pixels would be far greater than the size of our 
+        cache. Therefore, for row and col major mapping, there would be a 
+        lot of evictions to rotate every pixel in the image. But for 
+        block-major mapping, our implementation of the UArray2b_new_64K_block 
+        function creates blocks that are as large as possible while still 
+        fitting in the cache. Since they actually fit on the cache, the 
+        evictions will only occur when moving between these blocks rather 
+        than repeatedly for each row/column.
+
+- Col-major mapping was the fastest for 180 degree rotations
+        * This makes sense because due to the nature of a 180 degree rotation
+        all the pixels in the same column in the original image raster will 
+        also be in the same column in the rotated image. This means that there 
+        will be less evictions in the cache which would produces a lower CPU 
+        time. 
+
+- Col-major mapping was the slowest for the 90 and 180 degree rotations
+        * This is due to the opposite as stated above since each element in an
+        original column would be in a different column in the rotated image 
+        which would cause a large number of misses and evictions creating a 
+        higher CPU time
+
+---------------------------------
+TIME SPENT
+26 hrs
